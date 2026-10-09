@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>减脂计划 · 打卡记录表（80kg → 60kg）</title>
+<style>
+  :root{
+    --ink:#1f2a30; --sub:#5b6b73; --line:#e3e9ec; --bg:#f4f7f7;
+    --teal:#0f8a7e; --teal-soft:#e6f4f2; --amber:#c8792b; --amber-soft:#fdf1e3;
+    --rose:#b5476a; --rose-soft:#fdeaf0; --card:#fff; --done:#0f8a7e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.6;font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 90px}
+  header.hero{background:linear-gradient(135deg,#0f8a7e,#0c6f66);color:#fff;border-radius:18px;
+    padding:24px 26px;box-shadow:0 10px 28px rgba(15,138,126,.22)}
+  header.hero h1{margin:0 0 4px;font-size:22px}
+  header.hero .sub{opacity:.9;font-size:13.5px}
+  .hstat{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px}
+  .hstat div b{font-size:20px;display:block}
+  .hstat div span{font-size:12px;opacity:.85}
+  h2{font-size:18px;margin:32px 0 12px;padding-left:11px;border-left:5px solid var(--teal)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .weekbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .wtab{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 11px;font-size:13px;cursor:pointer;color:var(--sub)}
+  .wtab:hover{border-color:var(--teal)}
+  .wtab.active{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+  .wtab.has{border-color:var(--amber);color:var(--amber)}
+  .wtab.active.has{background:var(--teal);color:#fff;border-color:var(--teal)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{background:#eef3f3;font-size:12.5px;font-weight:600;color:#33454c;position:sticky;top:0}
+  tr.today{background:#f2fbf9}
+  tr.today td:first-child{font-weight:700;color:var(--teal)}
+  .ck{width:26px;height:26px;cursor:pointer;accent-color:var(--done);display:block}
+  .habit-name{font-size:13.5px}
+  .habit-name small{display:block;color:var(--sub);font-size:11.5px}
+  .daycell{text-align:center}
+  input.txt{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:13.5px;width:100%;font-family:inherit}
+  input.txt:focus{outline:none;border-color:var(--teal)}
+  input.num{width:74px;text-align:center}
+  .tiny{font-size:12px;color:var(--sub)}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:700}
+  .pill.p0{background:#eef1f2;color:#5b6b73}
+  .pill.p1{background:#e6f4f2;color:#0f8a7e}
+  .pill.p2{background:#fdf1e3;color:#c8792b}
+  .pill.p3{background:#fdeaf0;color:#b5476a}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 14px;font-size:13.5px;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--teal);color:var(--teal)}
+  .btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .btn.danger:hover{border-color:var(--rose);color:var(--rose)}
+  .bar{height:10px;border-radius:6px;background:#e6ecec;overflow:hidden}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#0f8a7e,#39b3a5);transition:width .3s}
+  .note-box{background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:8px;padding:11px 15px;font-size:13.5px;margin:12px 0}
+  .safe-box{background:var(--rose-soft);border-left:4px solid var(--rose);border-radius:8px;padding:11px 15px;font-size:13.5px;margin:12px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:700px){.grid2{grid-template-columns:1fr} table{font-size:13px} th,td{padding:6px 5px}}
+  .scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--sub);font-size:12px}
+  .legend{font-size:12px;color:var(--sub);margin-top:8px}
+  @media print{.wtab,.btn,header.hero{display:none} .scroll{max-height:none;overflow:visible}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>减脂计划 · 打卡记录表</h1>
+  <div class="sub">30岁 · 168cm · 80kg → 60kg ｜ 16:8（8:00–18:30）｜ 居家徒手 + 快走/爬楼/跳绳</div>
+  <div class="hstat">
+    <div><b id="hWeek">—</b><span>当前第几周</span></div>
+    <div><b id="hPhase">—</b><span>所处阶段</span></div>
+    <div><b id="hLatest">—</b><span>最新体重</span></div>
+    <div><b id="hLost">—</b><span>已减</span></div>
+    <div><b id="hLeft">—</b><span>距 120 斤</span></div>
+  </div>
+</header>
+
+<div class="note-box" style="margin-top:16px">
+  <b>怎么用：</b>勾选框直接点、数字直接填，<b>数据自动存在本机浏览器</b>（同一台电脑、同一浏览器打开就还在）。换电脑/清缓存前，先点底部「导出存档」。当前周默认按今天日期自动定位。
+</div>
+
+<!-- ============ 0. 基线记录 ============ -->
+<h2>0. 基线记录（建档时，只填一次）</h2>
+<div class="card">
+  <div class="row" style="gap:16px;align-items:flex-end">
+    <label class="tiny">建档日期<br><input class="txt" type="date" id="baseDate" style="width:150px"></label>
+    <label class="tiny">初始体重 (kg)<br><input class="txt num" type="number" step="0.1" id="baseKg" placeholder="如 80"></label>
+    <label class="tiny">初始腰围 (cm)<br><input class="txt num" type="number" step="0.1" id="baseWaist" placeholder="肚脐水平"></label>
+    <label class="tiny">初始大腿围 (cm)<br><input class="txt num" type="number" step="0.1" id="baseThigh" placeholder="大腿最粗处"></label>
+  </div>
+  <div class="note-box" id="baseDelta" style="margin-bottom:0">（先填上面的基线，再在下面记录表里填每周数据）</div>
+  <div class="legend">顶部「已减 / 距 120 斤」和进度条都会以这里填的<b>初始体重</b>为基准计算，所以先把它填对。</div>
+</div>
+
+<!-- ============ 1. 本周训练计划表 ============ -->
+<h2>1. 本周训练计划表（可勾选）</h2>
+<div class="card">
+  <div class="weekbar" id="weekbar"></div>
+  <div class="row" style="justify-content:space-between;margin-bottom:10px">
+    <div class="tiny" id="weekRange"></div>
+    <div class="row">
+      <button class="btn" id="btnFillWeek">一键勾满本周</button>
+      <button class="btn danger" id="btnClearWeek">清空本周</button>
+    </div>
+  </div>
+  <table>
+    <thead><tr>
+      <th style="width:64px">星期</th><th style="width:78px">日期</th>
+      <th>当天训练内容（按阶段自动排）</th>
+      <th style="width:56px;text-align:center">完成</th>
+      <th style="width:180px">实际时长/体感备注</th>
+    </tr></thead>
+    <tbody id="trainBody"></tbody>
+  </table>
+  <div class="legend">※ 训练日之间至少隔 1 天；晚上训练请在 20:30 哄睡前完成。</div>
+</div>
+
+<!-- ============ 2. 每日习惯打卡 ============ -->
+<h2>2. 每日习惯打卡（勾选）</h2>
+<div class="card">
+  <div class="tiny" style="margin-bottom:8px" id="habitWeekLabel"></div>
+  <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th style="min-width:190px">习惯</th><th style="width:44px;text-align:center">一</th><th style="width:44px;text-align:center">二</th><th style="width:44px;text-align:center">三</th><th style="width:44px;text-align:center">四</th><th style="width:44px;text-align:center">五</th><th style="width:44px;text-align:center">六</th><th style="width:44px;text-align:center">日</th></tr></thead>
+      <tbody id="habitBody"></tbody>
+    </table>
+  </div>
+  <div class="legend">习惯 1 与当天训练内容一致；周日允许休息，勾勾看心情。</div>
+</div>
+
+<!-- ============ 3. 体重/腰围记录 ============ -->
+<h2>3. 体重 / 腰围 / 大腿围记录（每周固定称 1 次）</h2>
+<div class="card">
+  <div class="grid2" style="margin-bottom:12px">
+    <div>
+      <div class="tiny">晨起空腹、排便后、同一件衣服称重。参考线按 <b>−0.6 kg/周</b> 推算。</div>
+      <div style="margin-top:10px">
+        <div class="tiny" id="progLabel">减重进度</div>
+        <div class="bar"><i id="progBar" style="width:0%"></i></div>
+      </div>
+    </div>
+    <div class="row" style="align-items:flex-end">
+      <button class="btn" id="btnToday">填入本周记录</button>
+      <button class="btn danger" id="btnClearWeight">清空体重记录</button>
+    </div>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr>
+        <th style="width:52px">周</th><th style="width:110px">称重日</th>
+        <th style="width:92px">体重 (kg)</th><th style="width:92px">腰围 (cm)</th><th style="width:92px">大腿围 (cm)</th>
+        <th style="width:88px">参考线</th><th style="width:88px">差值</th>
+      </tr></thead>
+      <tbody id="weightBody"></tbody>
+    </table>
+  </div>
+  <div class="legend">差值 = 实际 − 参考线；负数＝比计划瘦，正数＝比计划慢。测量方法：<b>腰围</b>取肚脐水平（呼气末、不收腹）；<b>大腿围</b>取大腿最粗处（站立放松、不绷紧）。腰围/大腿围比体重更能反映减脂，别只看体重。</div>
+</div>
+
+<!-- ============ 4. 阶段总览 ============ -->
+<h2>4. 阶段总览</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>阶段</th><th>周次 / 时间</th><th>重点</th><th>本周</th></tr></thead>
+    <tbody id="phaseBody"></tbody>
+  </table>
+</div>
+
+<div class="safe-box">
+  <b>安全红线（剖腹产）：</b>前 4 周不做卷腹、仰卧起坐、双腿抬举；核心先练呼吸与稳定。出现<b>腹部中间鼓起、漏尿、伤口牵扯痛</b> → 立刻停该动作并在备注里记下。持续疼痛请就医。
+</div>
+
+<div class="row" style="margin-top:18px">
+  <button class="btn primary" id="btnExport">导出存档 (JSON)</button>
+  <button class="btn" id="btnImport">导入存档</button>
+  <input type="file" id="fileInput" accept=".json" style="display:none">
+  <button class="btn" id="btnPrint">打印 / 存 PDF</button>
+  <button class="btn danger" id="btnResetAll">清空全部数据</button>
+</div>
+
+<div class="foot">
+  记录仅保存在你本机浏览器（localStorage），不会上传。参考数据：动作库 wger；营养参考 USDA FoodData Central；BMR 用 Mifflin-St Jeor 公式，TDEE 用标准活动系数。
+</div>
+
+</div>
+
+<script>
+/* ---------------- 基础设定 ---------------- */
+var START = new Date(2026, 9, 5);            // 第1周周一 = 2026-10-05
+var START_W = 80;                            // 起始体重 kg
+var FINAL_W = 60;                            // 终极目标 kg
+var RATE = 0.6;                              // 参考线 kg/周
+var WEEKS = 29;                              // 计划总周数
+var KEY = 'fitplan_2026_80to60_v1';
+var DAYNAME = ['周一','周二','周三','周四','周五','周六','周日'];
+
+var HABITS = [
+  ['运动打卡',      '按当天训练内容完成'],
+  ['核心/呼吸 5 分钟','膈肌呼吸 + 盆底激活'],
+  ['三餐按模板吃',   '早 1包+1蛋+250ml奶 · 午半碗饭 · 晚蛋白+菜'],
+  ['18:30 后不进食', '之后只喝水/无糖茶/黑咖啡'],
+  ['饮水 2–2.5 L',  '白水为主'],
+  ['步数达标',      'Phase0 6000 / 之后 8000+']
+];
+
+function phaseOf(w){ if(w<=2) return 0; if(w<=6) return 1; if(w<=16) return 2; return 3; }
+function phaseName(p){ return ['Phase 0 · 打地基','Phase 1 · 上量','Phase 2 · 结构化','Phase 3 · 收尾冲刺'][p]; }
+function phasePill(p){ return '<span class="pill p'+p+'">'+phaseName(p)+'</span>'; }
+
+function trainFor(p, d){
+  if(p===0) return d===6 ? '休息 / 散步（可选）' : '快走 10–15 分钟 + 核心呼吸 5 分钟';
+  if(p===1){
+    return ['午休 快走或爬楼 15–25 分钟','晚 徒手力量（深蹲/臀桥/鸟狗/死虫/墙壁俯卧撑）','午休 快走或爬楼 15–25 分钟','晚 徒手力量（同上）','午休 快走 15 分钟','快走或爬楼 20–30 分钟','休息 / 散步'][d];
+  }
+  if(p===2){
+    return ['午休 快走或爬楼 25 分钟','晚 力量 A · 下肢+核心','午休 快走或爬楼 25 分钟','晚 力量 B · 上肢+核心','午休 快走 20 分钟','跳绳间歇（30秒跳/60秒走 ×5–8）或长走','休息 / 散步'][d];
+  }
+  return ['午休 快走或爬楼 30 分钟','晚 力量 A · 下肢+核心','午休 快走或爬楼 30 分钟','晚 力量 B · 上肢+核心','午休 快走 25 分钟','跳绳间歇 ×8–10 组 或 长走 40 分钟','休息 / 散步'][d];
+}
+
+/* ---------------- 状态存储 ---------------- */
+var DEFAULT_BASE = { date:'2026-10-08', kg:80, waist:'', thigh:'' };
+var state = { habits:{}, train:{}, weight:{}, cur:1, base:Object.assign({},DEFAULT_BASE) };
+var memOK = true;
+try{
+  var raw = localStorage.getItem(KEY);
+  if(raw){ var s = JSON.parse(raw); state = Object.assign(state, s); state.base = Object.assign({},DEFAULT_BASE, state.base||{}); }
+}catch(e){ memOK = false; }
+function save(){
+  if(!memOK) return;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ memOK = false; }
+}
+function baseKg(){ var v = state.base && state.base.kg; return (v!=='' && v!=null && !isNaN(parseFloat(v))) ? parseFloat(v) : START_W; }
+
+/* ---------------- 日期工具 ---------------- */
+function today(){ var d=new Date(); d.setHours(0,0,0,0); return d; }
+function weekOfDate(d){ var x=Math.floor((d - START)/86400000/7)+1; return x; }
+function dateOf(w,d){ var x=new Date(START); x.setDate(x.getDate()+(w-1)*7+d); return x; }
+function fmt(d){ return (d.getMonth()+1)+'/'+d.getDate(); }
+
+/* ---------------- 渲染 ---------------- */
+function renderWeekbar(){
+  var cur = weekOfDate(today());
+  var html='';
+  for(var w=1;w<=WEEKS;w++){
+    var hasAny=false;
+    for(var d=0;d<7;d++){ if(state.train[w+'-'+d] || state.habits[w+'-'+d+'-0']) hasAny=true; }
+    var cls='wtab'+(w===state.cur?' active':'')+(hasAny?' has':'');
+    html+='<button class="'+cls+'" data-w="'+w+'">第'+w+'周</button>';
+  }
+  document.getElementById('weekbar').innerHTML=html;
+  Array.prototype.forEach.call(document.querySelectorAll('#weekbar .wtab'),function(b){
+    b.onclick=function(){ state.cur=parseInt(this.getAttribute('data-w'),10); save(); renderAll(); };
+  });
+}
+
+function renderTrain(){
+  var w=state.cur, p=phaseOf(w), body='';
+  var tw=today();
+  var r1=dateOf(w,0), r6=dateOf(w,6);
+  document.getElementById('weekRange').innerHTML='第 '+w+' 周 ｜ '+phasePill(p)+' ｜ '+
+     (r1.getMonth()+1)+'月'+r1.getDate()+'日 – '+(r6.getMonth()+1)+'月'+r6.getDate()+'日';
+  for(var d=0;d<7;d++){
+    var dt=dateOf(w,d);
+    var isToday = dt.getTime()===tw.getTime();
+    var key=w+'-'+d;
+    var checked=state.train[key]?' checked':'';
+    var note=state.weight['n'+key]||'';
+    body+='<tr class="'+(isToday?'today':'')+'">'+
+      '<td>'+DAYNAME[d]+(isToday?' ●':'')+'</td>'+
+      '<td>'+fmt(dt)+'</td>'+
+      '<td>'+trainFor(p,d)+'</td>'+
+      '<td class="daycell"><input type="checkbox" class="ck train-ck" data-key="'+key+'"'+checked+'></td>'+
+      '<td><input class="txt note-in" data-key="'+key+'" placeholder="—" value="'+(note||'').replace(/"/g,'&quot;')+'"></td>'+
+    '</tr>';
+  }
+  document.getElementById('trainBody').innerHTML=body;
+  Array.prototype.forEach.call(document.querySelectorAll('.train-ck'),function(c){
+    c.onchange=function(){ var k=this.getAttribute('data-key'); state.train[k]=this.checked; if(!this.checked) delete state.train[k]; save(); renderWeekbar(); renderSummary(); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.note-in'),function(i){
+    i.oninput=function(){ var k=this.getAttribute('data-key'); state.weight['n'+k]=this.value; save(); };
+  });
+}
+
+function renderHabits(){
+  var w=state.cur;
+  document.getElementById('habitWeekLabel').textContent='当前显示：第 '+w+' 周（'+phaseName(phaseOf(w))+'）';
+  var body='';
+  for(var h=0;h<HABITS.length;h++){
+    body+='<tr><td class="habit-name">'+HABITS[h][0]+'<small>'+HABITS[h][1]+'</small></td>';
+    for(var d=0;d<7;d++){
+      var key=w+'-'+d+'-'+h;
+      body+='<td class="daycell"><input type="checkbox" class="ck habit-ck" data-key="'+key+'"'+(state.habits[key]?' checked':'')+'></td>';
+    }
+    body+='</tr>';
+  }
+  document.getElementById('habitBody').innerHTML=body;
+  Array.prototype.forEach.call(document.querySelectorAll('.habit-ck'),function(c){
+    c.onchange=function(){ var k=this.getAttribute('data-key'); state.habits[k]=this.checked; if(!this.checked) delete state.habits[k]; save(); renderWeekbar(); };
+  });
+}
+
+function renderWeight(){
+  var body=''; var bk=baseKg();
+  for(var w=1;w<=WEEKS;w++){
+    var d=dateOf(w,6); var line=(bk-RATE*(w-1));
+    var rec=state.weight[w]||{};
+    var diff='';
+    if(rec.kg){ var df=parseFloat(rec.kg)-line; diff=(df>=0?'+':'')+df.toFixed(1); }
+    var cls = (today().getTime()>=dateOf(w,0).getTime())?'':' ';
+    body+='<tr class="'+(w===state.cur?'today':(w===weekOfDate(today())?'today':''))+'">'+
+      '<td>'+w+'</td>'+
+      '<td class="tiny">'+d.getFullYear()+'/'+fmt(d)+'</td>'+
+      '<td><input class="txt num w-in" type="number" step="0.1" data-w="'+w+'" data-f="kg" value="'+(rec.kg||'')+'" placeholder="—"></td>'+
+      '<td><input class="txt num w-in" type="number" step="0.1" data-w="'+w+'" data-f="waist" value="'+(rec.waist||'')+'" placeholder="—"></td>'+
+      '<td><input class="txt num w-in" type="number" step="0.1" data-w="'+w+'" data-f="thigh" value="'+(rec.thigh||'')+'" placeholder="—"></td>'+
+      '<td class="tiny">'+line.toFixed(1)+'</td>'+
+      '<td class="tiny">'+(diff||'—')+'</td>'+
+    '</tr>';
+  }
+  document.getElementById('weightBody').innerHTML=body;
+  Array.prototype.forEach.call(document.querySelectorAll('.w-in'),function(i){
+    i.onchange=function(){
+      var w=this.getAttribute('data-w'), f=this.getAttribute('data-f');
+      state.weight[w]=state.weight[w]||{};
+      if(this.value===''){ delete state.weight[w][f]; } else { state.weight[w][f]=this.value; }
+      if(!state.weight[w].kg && !state.weight[w].waist && !state.weight[w].thigh) delete state.weight[w];
+      save(); renderWeight(); renderSummary(); renderWeekbar();
+    };
+  });
+}
+
+function renderPhase(){
+  var cur=phaseOf(state.cur);
+  var rows=[
+    [0,'第 1–2 周','养成动起来的习惯 + 核心呼吸，不设强度'],
+    [1,'第 3–6 周','有氧时间拉长，徒手力量入门'],
+    [2,'第 7–16 周','规律力量 + 有氧组合'],
+    [3,'第 17–29 周','维持力量、有氧加量赶 5 月目标']
+  ];
+  var h='';
+  for(var i=0;i<rows.length;i++){
+    var p=rows[i][0];
+    h+='<tr'+(p===cur?' class="today"':'')+'><td>'+phasePill(p)+'</td><td>'+rows[i][1]+'</td><td class="tiny">'+rows[i][2]+'</td><td>'+(p===cur?'● 你在这一阶段':'')+'</td></tr>';
+  }
+  document.getElementById('phaseBody').innerHTML=h;
+}
+
+function latestWeight(){
+  var bestW=0, bestKg=null;
+  for(var w=1;w<=WEEKS;w++){ if(state.weight[w] && state.weight[w].kg){ bestW=w; bestKg=parseFloat(state.weight[w].kg); } }
+  return {week:bestW, kg:bestKg};
+}
+function latestMetric(f){
+  var v=null;
+  for(var w=1;w<=WEEKS;w++){
+    var rec=state.weight[w];
+    if(rec && rec[f]!==undefined && rec[f]!=='' && !isNaN(parseFloat(rec[f]))) v=parseFloat(rec[f]);
+  }
+  return v;
+}
+function renderBase(){
+  var b=state.base||{};
+  document.getElementById('baseDate').value=b.date||'';
+  document.getElementById('baseKg').value=(b.kg!=='' && b.kg!=null)?b.kg:'';
+  document.getElementById('baseWaist').value=(b.waist!=='' && b.waist!=null)?b.waist:'';
+  document.getElementById('baseThigh').value=(b.thigh!=='' && b.thigh!=null)?b.thigh:'';
+  var parts=[];
+  var lw=latestWeight(), lwa=latestMetric('waist'), lth=latestMetric('thigh');
+  if(b.kg!=='' && b.kg!=null){
+    var bk=parseFloat(b.kg);
+    if(lw.kg){ var dd=lw.kg-bk; parts.push('体重：'+bk+' → '+lw.kg.toFixed(1)+' kg（已减 '+Math.abs(dd).toFixed(1)+' kg）'); }
+    else parts.push('初始体重：'+bk+' kg（下方记录表里填每周体重）');
+  }
+  if(b.waist!=='' && b.waist!=null && lwa!=null){ var d2=lwa-parseFloat(b.waist); parts.push('腰围：'+parseFloat(b.waist)+' → '+lwa.toFixed(1)+' cm（'+(d2>=0?'+':'')+d2.toFixed(1)+'）'); }
+  if(b.thigh!=='' && b.thigh!=null && lth!=null){ var d3=lth-parseFloat(b.thigh); parts.push('大腿围：'+parseFloat(b.thigh)+' → '+lth.toFixed(1)+' cm（'+(d3>=0?'+':'')+d3.toFixed(1)+'）'); }
+  document.getElementById('baseDelta').innerHTML = parts.length? ('<b>当前变化：</b><br>'+parts.join('<br>')) : '（先填上面的基线，再在下面记录表里填每周数据）';
+}
+
+function renderSummary(){
+  var w=weekOfDate(today());
+  var cur=Math.min(Math.max(w,1),WEEKS);
+  document.getElementById('hWeek').textContent='第 '+cur+' 周';
+  var p=phaseOf(cur);
+  document.getElementById('hPhase').textContent='Phase '+p;
+  var bk=baseKg();
+  var lw=latestWeight();
+  document.getElementById('hLatest').textContent = lw.kg? lw.kg.toFixed(1)+'kg' : (bk+'kg');
+  document.getElementById('hLost').textContent = lw.kg? (bk-lw.kg).toFixed(1)+'kg' : '0kg';
+  document.getElementById('hLeft').textContent = lw.kg? ((lw.kg-60)*2).toFixed(1)+'斤' : ((bk-60)*2).toFixed(1)+'斤';
+  var pct=0;
+  if(lw.kg){ pct=Math.max(0,Math.min(100,(bk-lw.kg)/(bk-FINAL_W)*100)); }
+  document.getElementById('progBar').style.width=pct.toFixed(0)+'%';
+  document.getElementById('progLabel').textContent='减重进度 '+pct.toFixed(0)+'%（从 '+bk+'kg 到 '+FINAL_W+'kg）';
+  if(!memOK){ document.querySelector('.note-box').innerHTML='<b>提示：</b>当前浏览器禁止本地存储，刷新后数据会丢。请每填几次就点底部「导出存档」备份。'; }
+}
+
+function renderAll(){ renderWeekbar(); renderTrain(); renderHabits(); renderWeight(); renderPhase(); renderBase(); renderSummary(); }
+
+/* ---------------- 按钮 ---------------- */
+document.getElementById('btnFillWeek').onclick=function(){
+  var w=state.cur;
+  for(var d=0;d<7;d++){
+    if(!(phaseOf(w)===0 && d===6)) state.train[w+'-'+d]=true;
+    for(var h=0;h<HABITS.length;h++) state.habits[w+'-'+d+'-'+h]=true;
+  }
+  save(); renderAll();
+};
+document.getElementById('btnClearWeek').onclick=function(){
+  var w=state.cur;
+  for(var d=0;d<7;d++){ delete state.train[w+'-'+d];
+    for(var h=0;h<HABITS.length;h++) delete state.habits[w+'-'+d+'-'+h]; }
+  save(); renderAll();
+};
+document.getElementById('btnToday').onclick=function(){
+  var w=state.cur;
+  var v=prompt('输入本次体重 (kg)：');
+  if(v===null||v==='') return;
+  state.weight[w]=state.weight[w]||{}; state.weight[w].kg=v;
+  var wa=prompt('腰围 (cm，可留空)：'); if(wa) state.weight[w].waist=wa;
+  var th=prompt('大腿围 (cm，可留空)：'); if(th) state.weight[w].thigh=th;
+  save(); renderAll();
+};
+document.getElementById('btnClearWeight').onclick=function(){
+  if(!confirm('清空所有体重/腰围/大腿围记录？')) return;
+  for(var w=1;w<=WEEKS;w++){ if(state.weight[w]){ delete state.weight[w].kg; delete state.weight[w].waist; delete state.weight[w].thigh; } }
+  save(); renderAll();
+};
+document.getElementById('btnExport').onclick=function(){
+  var blob=new Blob([JSON.stringify(state,null,1)],{type:'application/json'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='减脂打卡存档_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+};
+document.getElementById('btnImport').onclick=function(){ document.getElementById('fileInput').click(); };
+document.getElementById('fileInput').onchange=function(e){
+  var f=e.target.files[0]; if(!f) return; var r=new FileReader();
+  r.onload=function(){ try{ state=Object.assign({habits:{},train:{},weight:{},cur:1,base:{}},JSON.parse(r.result)); state.base=Object.assign({},DEFAULT_BASE,state.base||{}); save(); renderAll(); alert('导入成功'); }catch(x){ alert('文件格式不对'); } };
+  r.readAsText(f);
+};
+document.getElementById('btnPrint').onclick=function(){ window.print(); };
+document.getElementById('btnResetAll').onclick=function(){
+  if(!confirm('清空全部打卡与记录？此操作不可恢复。')) return;
+  state={habits:{},train:{},weight:{},cur:weekOfDate(today()),base:Object.assign({},DEFAULT_BASE)}; save(); renderAll();
+};
+
+/* ---------------- 基线输入绑定 ---------------- */
+(function bindBase(){
+  var map={ baseDate:'date', baseKg:'kg', baseWaist:'waist', baseThigh:'thigh' };
+  Object.keys(map).forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    var ev = (id==='baseDate') ? 'change' : 'input';
+    el.addEventListener(ev, function(){
+      state.base=state.base||Object.assign({},DEFAULT_BASE);
+      state.base[map[id]]=this.value;
+      save(); renderSummary(); renderWeight(); renderBase();
+    });
+  });
+})();
+
+/* ---------------- 初始化 ---------------- */
+state.cur = Math.min(Math.max(state.cur||1,1),WEEKS);
+renderAll();
+</script>
+</body>
+</html>

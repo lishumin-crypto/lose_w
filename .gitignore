@@ -1,0 +1,10 @@
+# 依赖与本地文件都不要上传
+node_modules/
+_tmp/
+.workbuddy/
+*.log
+
+# 本机数据与密钥不上传（Render 上请用环境变量）
+cloud/state.json
+cloud/secret.txt
+cloud/url.txt

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: fitness-plan
+    runtime: node
+    rootDir: cloud
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    envVars:
+      - key: APP_SECRET
+        sync: false
+      - key: GH_TOKEN
+        sync: false
+      - key: GH_REPO
+        sync: false
+      - key: GH_PATH
+        value: state.json
+      - key: GH_BRANCH
+        value: main
