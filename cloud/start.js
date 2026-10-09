@@ -1,63 +1,79 @@
-/* 一键启动：本地服务器 + 公网隧道（需先 npm i localtunnel）
+/* 一键启动：本地服务器 + 公网隧道（SSH 反向隧道，走 localhost.run）
  *   node start.js
- * - 优先申请固定子域名；被占用则等待重试，拿不到才退回随机域名
- * - 支持父进程（watchdog）通过 IPC 通知「优雅关闭」：先关隧道再退出，
- *   这样 loca.lt 会立刻释放子域名，重启后能拿回同一个网址。
+ * - 比 localtunnel/loca.lt 稳，且没有「隧道密码页」
+ * - 公网网址会写入 url.txt；每次重连会换一个新网址（免费版不支持固定域名）
+ * - 支持 watchdog 通过 IPC 通知优雅重启
  */
+const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 process.chdir(__dirname);
 require('./server.js');                 // 启动 8080 服务器（同进程）
 
-let lt;
-try { lt = require('localtunnel'); }
-catch (e) { console.log('\n[!] 缺少 localtunnel，请先运行：npm i localtunnel'); process.exit(1); }
-
 const secret = fs.readFileSync(path.join(__dirname, 'secret.txt'), 'utf8').trim();
-const SUB = (process.env.SUB || 'jfplan-2026a').toLowerCase();
-const RETRY_WAIT = 15000, MAX_TRY = 6;
-let current = null;
+const KNOWN = path.join(__dirname, 'known_hosts');
 
-function report(url, fixed) {
+const SSH_CANDIDATES = [
+  process.env.SSH_EXE,
+  'D:\\Program Files\\Git\\usr\\bin\\ssh.exe',
+  'C:\\Program Files\\Git\\usr\\bin\\ssh.exe',
+  'C:\\Windows\\System32\\OpenSSH\\ssh.exe',
+  'ssh',
+].filter(Boolean);
+
+function findSsh() {
+  for (const p of SSH_CANDIDATES) {
+    if (p === 'ssh') return p;
+    try { if (fs.existsSync(p)) return p; } catch (e) {}
+  }
+  return 'ssh';
+}
+
+let child = null, current = null;
+
+function report(url) {
   const link = url + '/a/' + secret + '/';
   fs.writeFileSync(path.join(__dirname, 'url.txt'), link);
   console.log('\n============================================');
-  console.log(' 公网链接（' + (fixed ? '固定子域名' : '随机域名') + '，手机/电脑都能打开）：');
+  console.log(' 公网链接（手机/电脑都能打开）：');
   console.log(' ' + link);
   console.log('============================================\n');
 }
-function attach(t) {
-  current = t;
-  t.on('close', () => console.log('隧道已关闭'));
-  t.on('error', (e) => console.log('隧道错误（会自动重连）：' + e.message));
+
+function launch() {
+  const ssh = findSsh();
+  console.log('ssh = ' + ssh);
+  const args = [
+    '-o', 'StrictHostKeyChecking=no',
+    '-o', 'UserKnownHostsFile=' + KNOWN,
+    '-o', 'ServerAliveInterval=20',
+    '-o', 'ServerAliveCountMax=3',
+    '-o', 'ExitOnForwardFailure=yes',
+    '-R', '80:localhost:8080',
+    'nokey@localhost.run',
+  ];
+  child = spawn(ssh, args, { cwd: __dirname });
+  const handle = (buf) => {
+    const s = buf.toString();
+    process.stdout.write(s);
+    // localhost.run 可能在同一连接里更换网址，取最新出现的那个并及时更新 url.txt
+    const all = s.match(/https:\/\/[A-Za-z0-9._-]+\.lhr\.life/g);
+    if (all && all.length) {
+      const latest = all[all.length - 1];
+      if (latest !== current) { current = latest; report(current); }
+    }
+  };
+  child.stdout.on('data', handle);
+  child.stderr.on('data', handle);
+  child.on('exit', (code) => { console.log('ssh exited with code ' + code); child = null; });
 }
 
-function attempt(n) {
-  lt({ port: 8080, local_host: '127.0.0.1', subdomain: SUB }, (err, tunnel) => {
-    if (err) {
-      console.log('子域名 ' + SUB + ' 无法使用（' + err.message + '），改用随机域名');
-      return lt({ port: 8080, local_host: '127.0.0.1' }, (e2, t2) => {
-        if (e2) { console.log('隧道创建失败：' + e2.message); process.exit(1); }
-        report(t2.url, false); attach(t2);
-      });
-    }
-    const ok = tunnel.url.indexOf(SUB) !== -1;
-    if (!ok && n < MAX_TRY) {
-      console.log('子域名 ' + SUB + ' 暂被占用，' + (RETRY_WAIT / 1000) + 's 后重试（' + n + '/' + MAX_TRY + '）…');
-      try { tunnel.close(); } catch (e) {}
-      return setTimeout(() => attempt(n + 1), RETRY_WAIT);
-    }
-    report(tunnel.url, ok); attach(tunnel);
-  });
-}
-
-/* 优雅关闭：父进程要求重启时，先关隧道再退出 */
 process.on('message', (m) => {
   if (m && m.cmd === 'stop') {
-    console.log('收到重启指令，正在关闭隧道…');
-    try { if (current) current.close(); } catch (e) {}
-    setTimeout(() => process.exit(0), 1000);
+    console.log('收到重启指令，关闭隧道…');
+    try { if (child) child.kill(); } catch (e) {}
+    setTimeout(() => process.exit(0), 800);
   }
 });
 
-attempt(1);
+launch();
