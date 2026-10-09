@@ -9,11 +9,11 @@ services:
     envVars:
       - key: APP_SECRET
         sync: false
-      - key: GH_TOKEN
+      - key: GT_TOKEN
         sync: false
-      - key: GH_REPO
+      - key: GT_REPO
         sync: false
-      - key: GH_PATH
+      - key: GT_PATH
         value: state.json
-      - key: GH_BRANCH
-        value: main
+      - key: GT_BRANCH
+        value: master
