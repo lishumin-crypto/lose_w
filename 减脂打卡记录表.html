@@ -56,6 +56,7 @@
   .bar>i{display:block;height:100%;background:linear-gradient(90deg,#0f8a7e,#39b3a5);transition:width .3s}
   .note-box{background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:8px;padding:11px 15px;font-size:13.5px;margin:12px 0}
   .safe-box{background:var(--rose-soft);border-left:4px solid var(--rose);border-radius:8px;padding:11px 15px;font-size:13.5px;margin:12px 0}
+  .good-box{background:var(--teal-soft);border-left:4px solid var(--teal);border-radius:8px;padding:11px 15px;font-size:13.5px;margin:12px 0}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:700px){.grid2{grid-template-columns:1fr} table{font-size:13px} th,td{padding:6px 5px}}
   .scroll{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px}
@@ -69,7 +70,7 @@
 
 <header class="hero">
   <h1>减脂计划 · 打卡记录表</h1>
-  <div class="sub">30岁 · 168cm · 80kg → 60kg ｜ 16:8（8:00–18:30）｜ 居家徒手 + 快走/爬楼/跳绳</div>
+  <div class="sub">30岁 · 168cm · 80kg → 60kg ｜ 16:8（10:30–19:00）｜ 居家徒手 + 快走/爬楼/跳绳</div>
   <div class="hstat">
     <div><b id="hWeek">—</b><span>当前第几周</span></div>
     <div><b id="hPhase">—</b><span>所处阶段</span></div>
@@ -81,6 +82,10 @@
 
 <div class="note-box" style="margin-top:16px">
   <b>怎么用：</b>勾选框直接点、数字直接填，<b>数据自动存在本机浏览器</b>（同一台电脑、同一浏览器打开就还在）。换电脑/清缓存前，先点底部「导出存档」。当前周默认按今天日期自动定位。
+</div>
+
+<div class="good-box" style="margin-top:12px">
+  <b>📅 正式打卡从 2026-10-12（周一）开始。</b>10/9–10/11 为<b>试运行期</b>：先试方案（10:30 喝奶 / 19:00 收口 / 三餐改造），看是否舒服、能否坚持，<b>这几天先不打卡</b>。10/12 起打开本表，当前周会自动定位到第 1 周，开始勾选与记录。
 </div>
 
 <!-- ============ 0. 基线记录 ============ -->
@@ -140,7 +145,7 @@
   <div style="font-weight:700;margin:4px 0 6px">① 本周总采购量（按重量，一次买齐）</div>
   <div class="grid2">
     <table>
-      <thead><tr><th>蔬菜（合计 ≈2.4 kg）</th><th style="width:78px">一周量</th></tr></thead>
+      <thead><tr><th>蔬菜（合计 ≈2.2 kg）</th><th style="width:78px">一周量</th></tr></thead>
       <tbody id="prepTotalBody"></tbody>
     </table>
     <table>
@@ -151,9 +156,18 @@
 
   <div style="font-weight:700;margin:18px 0 6px">② 每天分装（备好一天打一个钩，一周 6 次）</div>
   <table>
-    <thead><tr><th style="width:66px">第几天</th><th>蔬菜（生重 400g）</th><th>蛋白</th><th style="width:56px;text-align:center">完成</th></tr></thead>
+    <thead><tr><th style="width:66px">第几天</th><th>蔬菜（生重，300–400g）</th><th>蛋白</th><th style="width:56px;text-align:center">完成</th></tr></thead>
     <tbody id="prepDayBody"></tbody>
   </table>
+
+  <div style="font-weight:700;margin:18px 0 6px">③ 备菜顺序（周末 30 分钟：先焯水后分装）</div>
+  <ol style="margin:0 0 4px;padding-left:22px;line-height:1.7">
+    <li style="margin-bottom:6px"><b>先泡干货：</b>干木耳提前泡发（放冷藏），用前沥干。</li>
+    <li style="margin-bottom:6px"><b>先焯水（水开下锅，过凉沥干再分装）：</b>叶菜 10–20 秒（去草酸、更耐放，<b>前 3 天吃完</b>）→ 挤干水分；菜花 1 分钟（可冷冻，最耐放）；豆芽 30 秒（豆类生芽易带菌，焯水更稳）；菌菇 1 分钟去土腥（可选）。</li>
+    <li style="margin-bottom:6px"><b>不焯水的，洗切直接分装：</b>大白菜/娃娃菜、番茄（整颗更耐放，吃前再切）、冬瓜（去皮切块）、芹菜（切段）、彩椒（去籽切块）。</li>
+    <li style="margin-bottom:6px"><b>蛋白分装：</b>按每天分量装盒；冷冻虾仁冷冻，其余冷藏；鸡蛋整颗、别洗、大头朝上冷藏。</li>
+    <li style="margin-bottom:2px"><b>贴标摆放：</b>保鲜盒标第几天，<b>前 3 天先吃叶菜/菌菇</b>，菜花/根茎排后面。</li>
+  </ol>
   <div class="legend">第 7 天用剩下的菜随意配。<b>不吃</b>：秋葵、苦瓜、胡萝卜、西兰花、海带。备菜：洗净 → 切好（叶菜整叶不切）→ 按上面 6 天的量分装 → 前 3 天先吃叶菜，根茎/菜花排后面。</div>
 </div>
 
@@ -215,7 +229,7 @@
 
 <script>
 /* ---------------- 基础设定 ---------------- */
-var START = new Date(2026, 9, 5);            // 第1周周一 = 2026-10-05
+var START = new Date(2026, 9, 12);            // 第1周周一 = 2026-10-12（正式开始）
 var START_W = 80;                            // 起始体重 kg
 var FINAL_W = 60;                            // 终极目标 kg
 var RATE = 0.6;                              // 参考线 kg/周
@@ -226,8 +240,8 @@ var DAYNAME = ['周一','周二','周三','周四','周五','周六','周日'];
 var HABITS = [
   ['运动打卡',      '按当天训练内容完成'],
   ['核心/呼吸 5 分钟','膈肌呼吸 + 盆底激活'],
-  ['三餐按模板吃',   '早 1包+1蛋+250ml奶 · 午半碗饭 · 晚蛋白+菜'],
-  ['18:30 后不进食', '之后只喝水/无糖茶/黑咖啡'],
+  ['按餐次模板吃',   '10:30 喝奶(250ml) · 午主餐:蛋白+菜+半碗饭 · 晚:水煮菜+蛋白'],
+  ['19:00 后不进食', '之后只喝水/无糖茶/黑咖啡'],
   ['饮水 2–2.5 L',  '白水为主'],
   ['步数达标',      'Phase0 6000 / 之后 8000+']
 ];
@@ -237,8 +251,8 @@ var HABITS = [
 var PREP_TOTAL = [
   ['菜花（花椰菜）', '300g'], ['大白菜 / 娃娃菜', '400g'], ['叶菜（菠菜 / 油麦菜 / 茼蒿）', '400g'],
   ['金针菇', '100g'], ['香菇', '100g'], ['杏鲍菇', '100g'],
-  ['番茄', '200g'], ['冬瓜', '150g'], ['白萝卜', '100g'],
-  ['莴笋', '100g'], ['芹菜', '100g'], ['彩椒 / 青椒', '150g'],
+  ['番茄', '200g'], ['冬瓜', '150g'],
+  ['芹菜', '100g'], ['彩椒 / 青椒', '150g'],
   ['豆芽', '150g'], ['干木耳（泡发后约 50g）', '10g']
 ];
 var PREP_PROTEIN = [
@@ -249,10 +263,10 @@ var PREP_PROTEIN = [
 var PREP_DAYS = [
   ['第 1 天', '菜花 150g + 番茄 150g + 金针菇 100g', '即食鸡胸 100g'],
   ['第 2 天', '大白菜 200g + 冬瓜 150g + 干木耳 10g', '卤牛肉 100g'],
-  ['第 3 天', '菠菜/油麦菜 200g + 香菇 100g + 白萝卜 100g', '冷冻虾仁 150g'],
+  ['第 3 天', '菠菜/油麦菜 200g + 香菇 100g', '冷冻虾仁 150g'],
   ['第 4 天', '菜花 150g + 芹菜 100g + 彩椒 150g', '老豆腐 200g + 鸡蛋 1 个'],
   ['第 5 天', '大白菜 200g + 豆芽 150g + 番茄 50g', '即食鸡胸 100g'],
-  ['第 6 天', '茼蒿/菠菜 200g + 杏鲍菇 100g + 莴笋 100g', '卤牛肉 100g + 鸡蛋 1 个']
+  ['第 6 天', '茼蒿/菠菜 200g + 杏鲍菇 100g', '卤牛肉 100g + 鸡蛋 1 个']
 ];
 
 function phaseOf(w){ if(w<=2) return 0; if(w<=6) return 1; if(w<=16) return 2; return 3; }
@@ -456,7 +470,7 @@ function renderBase(){
 function renderSummary(){
   var w=weekOfDate(today());
   var cur=Math.min(Math.max(w,1),WEEKS);
-  document.getElementById('hWeek').textContent='第 '+cur+' 周';
+  document.getElementById('hWeek').textContent = (today() < START) ? '试运行期' : ('第 '+cur+' 周');
   var p=phaseOf(cur);
   document.getElementById('hPhase').textContent='Phase '+p;
   var bk=baseKg();
