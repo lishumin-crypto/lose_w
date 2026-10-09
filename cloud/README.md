@@ -39,11 +39,12 @@
 ```
 site/                 网页（index / plan / tracker）
 cloud/
-  ├─ server.js        服务器：发网页 + 存数据（可选 GitHub 存储）
+  ├─ server.js        服务器：发网页 + 存数据（码云 / GitHub / 本机）
   ├─ start.js         启动：服务器 + 公网隧道（固定子域名）
   ├─ watchdog.js      守护：崩了自动重启
   ├─ 启动.cmd         手动启动（双击）
   ├─ 安装开机自启.cmd  安装开机自动启动（双击一次）
+  ├─ 部署到云主机.md   永久部署分步教程（用码云当数据库）
   ├─ secret.txt       网址里的随机串（相当于密码）
   ├─ state.json       记录本体（本机模式）
   └─ url.txt          当前公网链接
@@ -51,8 +52,10 @@ cloud/
 
 ## 永久部署（彻底不依赖本机）
 
-免费 + 永久 + 独立于你的电脑 → 见 **`部署到Render.md`**（含分步操作）。
-⚠️ 注意：Render 免费版磁盘是临时的，所以必须配合外部存储（教程里用你的 GitHub 仓库当数据库，代码已写好）。
+代码已在码云：**https://gitee.com/llssmm/lose-w**
+
+免费 + 永久 + 独立于你的电脑 → 见 **`部署到云主机.md`**。
+⚠️ 云主机（Render 等）免费版磁盘是临时的，所以必须配合外部存储 —— 教程里用**你的码云仓库当数据库**，`server.js` 已内置支持（环境变量 `GT_TOKEN / GT_REPO / GT_PATH / GT_BRANCH`）。
 
 ## 安全提示
 

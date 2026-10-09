@@ -2,10 +2,9 @@
  * 我的减脂计划 · 云端托管服务器
  *   静态站点：../site/（index / plan / tracker）
  *   存储：GET|POST  /a/<secret>/api/state
- *     - 默认写入本机 state.json
- *     - 若设置了 GH_TOKEN + GH_REPO，则改为读写你的 GitHub 仓库文件
- *       （Render 免费版磁盘是临时的，必须用这个才能不丢数据）
- *   启动：node server.js   （PORT 可用环境变量覆盖）
+ *     优先级：码云 Gitee  >  GitHub  >  本机 state.json
+ *     —— 云主机（Render 等）磁盘是临时的，必须用前两者才不丢数据
+ *   启动：node server.js   （PORT 可覆盖）
  * ============================================================ */
 const http = require('http');
 const https = require('https');
@@ -24,25 +23,30 @@ if (!SECRET) {
 }
 const PREFIX = '/a/' + SECRET + '/';
 
-/* ---------- 可选：GitHub 仓库存储 ---------- */
+/* ============ 存储后端 ============ */
+// 码云 Gitee
+const GT = {
+  token: process.env.GT_TOKEN || '',
+  repo: process.env.GT_REPO || 'llssmm/lose-w',
+  file: process.env.GT_PATH || 'state.json',
+  branch: process.env.GT_BRANCH || 'master',
+};
+// GitHub
 const GH = {
   token: process.env.GH_TOKEN || '',
   repo: process.env.GH_REPO || '',
   file: process.env.GH_PATH || 'state.json',
   branch: process.env.GH_BRANCH || 'main',
 };
-const useGH = !!(GH.token && GH.repo);
+const useGT = !!GT.token;
+const useGH = !useGT && !!(GH.token && GH.repo);
 
-function gh(method, urlPath, body) {
+function httpJson(opts, payload) {
   return new Promise((resolve, reject) => {
-    const data = body ? JSON.stringify(body) : null;
-    const headers = {
-      'User-Agent': 'fitplan-app',
-      Authorization: 'Bearer ' + GH.token,
-      Accept: 'application/vnd.github+json',
-    };
+    const data = payload ? JSON.stringify(payload) : null;
+    const headers = Object.assign({ 'User-Agent': 'fitplan-app' }, opts.headers || {});
     if (data) { headers['Content-Type'] = 'application/json'; headers['Content-Length'] = Buffer.byteLength(data); }
-    const req = https.request({ host: 'api.github.com', port: 443, method, path: urlPath, headers }, (res) => {
+    const req = https.request({ host: opts.host, port: 443, method: opts.method, path: opts.path, headers }, (res) => {
       let d = ''; res.on('data', (c) => (d += c));
       res.on('end', () => resolve({ code: res.statusCode, body: d }));
     });
@@ -51,24 +55,68 @@ function gh(method, urlPath, body) {
     req.end();
   });
 }
-const ghPath = () => '/repos/' + GH.repo + '/contents/' + GH.file.split('/').map(encodeURIComponent).join('/');
+const b64 = (s) => Buffer.from(s, 'utf8').toString('base64');
+const unb64 = (s) => Buffer.from(String(s).replace(/\s/g, ''), 'base64').toString('utf8');
+
+/* ---- 码云读写 ---- */
+async function gtRead() {
+  const p = '/api/v5/repos/' + GT.repo + '/contents/' + GT.file.split('/').map(encodeURIComponent).join('/') +
+    '?access_token=' + encodeURIComponent(GT.token) + '&ref=' + encodeURIComponent(GT.branch);
+  const r = await httpJson({ host: 'gitee.com', method: 'GET', path: p });
+  if (r.code === 404) return { text: '{}', sha: null };
+  if (r.code !== 200) throw new Error('码云读取失败 ' + r.code);
+  const j = JSON.parse(r.body);
+  return { text: unb64(j.content || ''), sha: j.sha };
+}
+async function gtWrite(text) {
+  const cur = await gtRead();
+  const base = '/api/v5/repos/' + GT.repo + '/contents/' + GT.file.split('/').map(encodeURIComponent).join('/');
+  const payload = { access_token: GT.token, content: b64(text), message: 'update fitness state', branch: GT.branch };
+  if (cur.sha) { payload.sha = cur.sha; }
+  const r = await httpJson({ host: 'gitee.com', method: cur.sha ? 'PUT' : 'POST', path: base }, payload);
+  if (r.code !== 200 && r.code !== 201) throw new Error('码云写入失败 ' + r.code + ' ' + r.body.slice(0, 120));
+}
+
+/* ---- GitHub 读写 ---- */
 async function ghRead() {
-  const r = await gh(GET_M, ghPath() + '?ref=' + encodeURIComponent(GH.branch));
+  const p = '/repos/' + GH.repo + '/contents/' + GH.file.split('/').map(encodeURIComponent).join('/') +
+    '?ref=' + encodeURIComponent(GH.branch);
+  const r = await httpJson({ host: 'api.github.com', method: 'GET', path: p, headers: { Authorization: 'Bearer ' + GH.token, Accept: 'application/vnd.github+json' } });
   if (r.code === 404) return { text: '{}', sha: null };
   if (r.code !== 200) throw new Error('GitHub 读取失败 ' + r.code);
   const j = JSON.parse(r.body);
-  return { text: Buffer.from(j.content.replace(/\n/g, ''), 'base64').toString('utf8'), sha: j.sha };
+  return { text: unb64(j.content || ''), sha: j.sha };
 }
 async function ghWrite(text) {
   const cur = await ghRead();
-  const body = { message: 'update fitness state', content: Buffer.from(text, 'utf8').toString('base64'), branch: GH.branch };
-  if (cur.sha) body.sha = cur.sha;
-  const r = await gh(PUT_M, ghPath(), body);
+  const p = '/repos/' + GH.repo + '/contents/' + GH.file.split('/').map(encodeURIComponent).join('/');
+  const payload = { message: 'update fitness state', content: b64(text), branch: GH.branch };
+  if (cur.sha) payload.sha = cur.sha;
+  const r = await httpJson({ host: 'api.github.com', method: 'PUT', path: p, headers: { Authorization: 'Bearer ' + GH.token, Accept: 'application/vnd.github+json' } }, payload);
   if (r.code !== 200 && r.code !== 201) throw new Error('GitHub 写入失败 ' + r.code);
 }
-const GET_M = 'GET', PUT_M = 'PUT';
 
-/* ---------- 通用 ---------- */
+/* ---- 统一入口 ---- */
+const localRead = () => { try { return fs.readFileSync(DATA, 'utf8'); } catch (e) { return '{}'; } };
+function localWrite(t) { const f = DATA + '.tmp'; fs.writeFileSync(f, t); fs.renameSync(f, DATA); }
+
+async function storeRead() {
+  if (useGT) return (await gtRead()).text;
+  if (useGH) return (await ghRead()).text;
+  return localRead();
+}
+async function storeWrite(text) {
+  if (useGT) return gtWrite(text);
+  if (useGH) return ghWrite(text);
+  return localWrite(text);
+}
+function storageName() {
+  if (useGT) return 'Gitee ' + GT.repo + '/' + GT.file;
+  if (useGH) return 'GitHub ' + GH.repo + '/' + GH.file;
+  return 'local state.json';
+}
+
+/* ============ HTTP ============ */
 const FILES = {
   '': 'index.html', 'index': 'index.html', 'index.html': 'index.html',
   'plan': 'plan.html', 'plan.html': 'plan.html',
@@ -78,9 +126,6 @@ function send(res, code, body, type) {
   res.writeHead(code, { 'Content-Type': type || 'text/plain; charset=utf-8' });
   res.end(body);
 }
-function atomicWrite(file, txt) { const t = file + '.tmp'; fs.writeFileSync(t, txt); fs.renameSync(t, file); }
-function localRead() { try { return fs.readFileSync(DATA, 'utf8'); } catch (e) { return '{}'; } }
-function localWrite(txt) { atomicWrite(DATA, txt); }
 
 http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
@@ -89,11 +134,9 @@ http.createServer((req, res) => {
 
   if (rest === 'api/state') {
     if (req.method === 'GET') {
-      if (useGH) {
-        return ghRead().then((r) => send(res, 200, r.text, 'application/json; charset=utf-8'))
-          .catch((e) => send(res, 502, JSON.stringify({ error: e.message }), 'application/json'));
-      }
-      return send(res, 200, localRead(), 'application/json; charset=utf-8');
+      return storeRead()
+        .then((t) => send(res, 200, t, 'application/json; charset=utf-8'))
+        .catch((e) => send(res, 502, JSON.stringify({ error: e.message }), 'application/json'));
     }
     if (req.method === 'POST') {
       let body = '', tooBig = false;
@@ -101,13 +144,9 @@ http.createServer((req, res) => {
       req.on('end', () => {
         if (tooBig) return send(res, 413, '{"error":"too big"}', 'application/json');
         try { JSON.parse(body); } catch (e) { return send(res, 400, '{"error":"bad json"}', 'application/json'); }
-        if (useGH) {
-          return ghWrite(body)
-            .then(() => send(res, 200, '{"ok":true}', 'application/json; charset=utf-8'))
-            .catch((e) => send(res, 502, JSON.stringify({ error: e.message }), 'application/json'));
-        }
-        try { localWrite(body); } catch (e) { return send(res, 500, '{"error":"write failed"}', 'application/json'); }
-        send(res, 200, '{"ok":true}', 'application/json; charset=utf-8');
+        storeWrite(body)
+          .then(() => send(res, 200, '{"ok":true}', 'application/json; charset=utf-8'))
+          .catch((e) => send(res, 502, JSON.stringify({ error: e.message }), 'application/json'));
       });
       return;
     }
@@ -120,5 +159,5 @@ http.createServer((req, res) => {
   catch (e) { send(res, 500, 'file error: ' + e.message); }
 }).listen(parseInt(process.env.PORT || '8080', 10), () => {
   console.log('server on :' + (process.env.PORT || 8080) + '  path ' + PREFIX);
-  console.log('storage: ' + (useGH ? ('GitHub ' + GH.repo + '/' + GH.file) : 'local state.json'));
+  console.log('storage: ' + storageName());
 });
