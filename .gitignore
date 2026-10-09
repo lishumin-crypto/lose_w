@@ -8,3 +8,5 @@ _tmp/
 cloud/state.json
 cloud/secret.txt
 cloud/url.txt
+cloud/known_hosts
+cloud/run.log
