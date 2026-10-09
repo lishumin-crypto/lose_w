@@ -135,8 +135,19 @@
   <div class="legend">习惯 1 与当天训练内容一致；周日允许休息，勾勾看心情。</div>
 </div>
 
-<!-- ============ 3. 体重/腰围记录 ============ -->
-<h2>3. 体重 / 腰围 / 大腿围记录（每周固定称 1 次）</h2>
+<!-- ============ 3. 本周备菜 ============ -->
+<h2>3. 本周备菜 &amp; 采购（可勾选）</h2>
+<div class="card">
+  <div class="tiny" style="margin-bottom:8px" id="prepWeekLabel"></div>
+  <table>
+    <thead><tr><th>本周要买 / 要备的</th><th style="width:64px;text-align:center">完成</th></tr></thead>
+    <tbody id="prepBody"></tbody>
+  </table>
+  <div class="legend">蔬菜按每天 350g 配，一周约 2.5 kg。<b>不吃</b>：秋葵、苦瓜、胡萝卜、西兰花、海带。周末 30 分钟：洗净 → 切好（叶菜整叶不切）→ 按「一天一盒」分装 → 前 3 天先吃叶菜，根茎/菜花排后面。</div>
+</div>
+
+<!-- ============ 4. 体重/腰围记录 ============ -->
+<h2>4. 体重 / 腰围 / 大腿围记录（每周固定称 1 次）</h2>
 <div class="card">
   <div class="grid2" style="margin-bottom:12px">
     <div>
@@ -165,7 +176,7 @@
 </div>
 
 <!-- ============ 4. 阶段总览 ============ -->
-<h2>4. 阶段总览</h2>
+<h2>5. 阶段总览</h2>
 <div class="card">
   <table>
     <thead><tr><th>阶段</th><th>周次 / 时间</th><th>重点</th><th>本周</th></tr></thead>
@@ -210,6 +221,25 @@ var HABITS = [
   ['步数达标',      'Phase0 6000 / 之后 8000+']
 ];
 
+/* 每周备菜 / 采购清单（不吃：秋葵、苦瓜、胡萝卜、西兰花、海带） */
+var PREP = [
+  '菜花（花椰菜） 2 颗',
+  '大白菜 / 娃娃菜 1 颗',
+  '叶菜 2 把（菠菜 / 油麦菜 / 茼蒿）',
+  '金针菇 / 香菇 / 杏鲍菇 3 份',
+  '番茄 6 个',
+  '冬瓜 / 白萝卜 各 1 段',
+  '莴笋 / 芹菜 各 1 份',
+  '青椒 / 彩椒 4 个',
+  '豆芽 / 荷兰豆 1 袋',
+  '干木耳 1 包',
+  '即食鸡胸 7 盒',
+  '鸡蛋 12 个（冷藏存放，别洗）',
+  '老豆腐 3 盒（吃不完切块冷冻）',
+  '冷冻虾仁 1 袋',
+  '卤牛肉 2 份 / 真空卤蛋 6 个'
+];
+
 function phaseOf(w){ if(w<=2) return 0; if(w<=6) return 1; if(w<=16) return 2; return 3; }
 function phaseName(p){ return ['Phase 0 · 打地基','Phase 1 · 上量','Phase 2 · 结构化','Phase 3 · 收尾冲刺'][p]; }
 function phasePill(p){ return '<span class="pill p'+p+'">'+phaseName(p)+'</span>'; }
@@ -227,7 +257,7 @@ function trainFor(p, d){
 
 /* ---------------- 状态存储（云端优先，本地仅作离线备份） ---------------- */
 var DEFAULT_BASE = { date:'2026-10-08', kg:80, waist:'', thigh:'' };
-var state = { habits:{}, train:{}, weight:{}, cur:1, base:Object.assign({},DEFAULT_BASE) };
+var state = { habits:{}, train:{}, weight:{}, prep:{}, cur:1, base:Object.assign({},DEFAULT_BASE) };
 
 /* API 地址：与页面同目录下的 api/state（本地 file:// 打开时为空 → 自动降级为本地） */
 var API = (location.protocol === 'http:' || location.protocol === 'https:')
@@ -235,7 +265,7 @@ var API = (location.protocol === 'http:' || location.protocol === 'https:')
 
 function normalize(s){
   s = s || {};
-  var out = Object.assign({habits:{},train:{},weight:{},cur:1,base:{}}, s);
+  var out = Object.assign({habits:{},train:{},weight:{},prep:{},cur:1,base:{}}, s);
   out.base = Object.assign({}, DEFAULT_BASE, out.base||{});
   return out;
 }
@@ -344,6 +374,21 @@ function renderHabits(){
   });
 }
 
+function renderPrep(){
+  var w=state.cur;
+  document.getElementById('prepWeekLabel').textContent='当前显示：第 '+w+' 周（买齐 / 备好就打勾，每周重来一次）';
+  var body='';
+  for(var i=0;i<PREP.length;i++){
+    var key=w+'-p-'+i;
+    body+='<tr><td class="habit-name">'+PREP[i]+'</td>'+
+      '<td class="daycell"><input type="checkbox" class="ck prep-ck" data-key="'+key+'"'+(state.prep[key]?' checked':'')+'></td></tr>';
+  }
+  document.getElementById('prepBody').innerHTML=body;
+  Array.prototype.forEach.call(document.querySelectorAll('.prep-ck'),function(c){
+    c.onchange=function(){ var k=this.getAttribute('data-key'); state.prep[k]=this.checked; if(!this.checked) delete state.prep[k]; save(); };
+  });
+}
+
 function renderWeight(){
   var body=''; var bk=baseKg();
   for(var w=1;w<=WEEKS;w++){
@@ -438,7 +483,7 @@ function renderSummary(){
   document.getElementById('progLabel').textContent='减重进度 '+pct.toFixed(0)+'%（从 '+bk+'kg 到 '+FINAL_W+'kg）';
 }
 
-function renderAll(){ renderWeekbar(); renderTrain(); renderHabits(); renderWeight(); renderPhase(); renderBase(); renderSummary(); }
+function renderAll(){ renderWeekbar(); renderTrain(); renderHabits(); renderPrep(); renderWeight(); renderPhase(); renderBase(); renderSummary(); }
 
 /* ---------------- 按钮 ---------------- */
 document.getElementById('btnFillWeek').onclick=function(){
@@ -483,7 +528,7 @@ document.getElementById('fileInput').onchange=function(e){
 document.getElementById('btnPrint').onclick=function(){ window.print(); };
 document.getElementById('btnResetAll').onclick=function(){
   if(!confirm('清空全部打卡与记录？此操作不可恢复。')) return;
-  state={habits:{},train:{},weight:{},cur:weekOfDate(today()),base:Object.assign({},DEFAULT_BASE)}; save(); renderAll();
+  state={habits:{},train:{},weight:{},prep:{},cur:weekOfDate(today()),base:Object.assign({},DEFAULT_BASE)}; save(); renderAll();
 };
 
 /* ---------------- 基线输入绑定 ---------------- */
