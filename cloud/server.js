@@ -141,7 +141,7 @@ function send(res, code, body, type) {
   res.end(body);
 }
 
-http.createServer((req, res) => {
+const srv = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url.indexOf(PREFIX) !== 0) return send(res, 404, 'Not found');
   const rest = url.slice(PREFIX.length);
@@ -171,7 +171,30 @@ http.createServer((req, res) => {
   if (!fname) return send(res, 404, 'Not found');
   try { send(res, 200, fs.readFileSync(ROOT + fname, 'utf8'), 'text/html; charset=utf-8'); }
   catch (e) { send(res, 500, 'file error: ' + e.message); }
-}).listen(parseInt(process.env.PORT || '8080', 10), () => {
-  console.log('server on :' + (process.env.PORT || 8080) + '  path ' + PREFIX);
+});
+
+const PORT_NUM = parseInt(process.env.PORT || '8080', 10);
+
+srv.on('error', (e) => {
+  if (e.code === 'EADDRINUSE') {
+    console.log('');
+    console.log('============================================================');
+    console.log('  服务已经在运行了（端口 ' + PORT_NUM + ' 已被占用），不用重复启动。');
+    console.log('');
+    console.log('  固定地址（永远不变）：');
+    console.log('    这台电脑上打开 ： http://localhost:' + PORT_NUM + PREFIX);
+    console.log('    同一 WiFi 手机 ： http://<这台电脑的局域网IP>:' + PORT_NUM + PREFIX);
+    console.log('  外网地址（会变，看 url.txt）：');
+    try { console.log('    ' + fs.readFileSync(path.join(__dirname, 'url.txt'), 'utf8').trim()); } catch (e2) { console.log('    (暂未生成)'); }
+    console.log('============================================================');
+    console.log('');
+    process.exit(0);
+  }
+  console.error(e);
+  process.exit(1);
+});
+
+srv.listen(PORT_NUM, () => {
+  console.log('server on :' + PORT_NUM + '  path ' + PREFIX);
   console.log('storage: ' + storageName());
 });
