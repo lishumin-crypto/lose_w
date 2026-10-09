@@ -133,14 +133,28 @@
 </div>
 
 <!-- ============ 3. 本周备菜 ============ -->
-<h2>3. 本周备菜 &amp; 采购（可勾选）</h2>
+<h2>3. 本周备菜（按天打钩）</h2>
 <div class="card">
-  <div class="tiny" style="margin-bottom:8px" id="prepWeekLabel"></div>
+  <div class="tiny" style="margin-bottom:10px" id="prepWeekLabel"></div>
+
+  <div style="font-weight:700;margin:4px 0 6px">① 本周总采购量（按重量，一次买齐）</div>
+  <div class="grid2">
+    <table>
+      <thead><tr><th>蔬菜（合计 ≈2.4 kg）</th><th style="width:78px">一周量</th></tr></thead>
+      <tbody id="prepTotalBody"></tbody>
+    </table>
+    <table>
+      <thead><tr><th>蛋白 / 其它</th><th style="width:78px">一周量</th></tr></thead>
+      <tbody id="prepProteinBody"></tbody>
+    </table>
+  </div>
+
+  <div style="font-weight:700;margin:18px 0 6px">② 每天分装（备好一天打一个钩，一周 6 次）</div>
   <table>
-    <thead><tr><th>本周要买 / 要备的</th><th style="width:64px;text-align:center">完成</th></tr></thead>
-    <tbody id="prepBody"></tbody>
+    <thead><tr><th style="width:66px">第几天</th><th>蔬菜（生重 400g）</th><th>蛋白</th><th style="width:56px;text-align:center">完成</th></tr></thead>
+    <tbody id="prepDayBody"></tbody>
   </table>
-  <div class="legend">蔬菜按每天 350g 配，一周约 2.5 kg。<b>不吃</b>：秋葵、苦瓜、胡萝卜、西兰花、海带。周末 30 分钟：洗净 → 切好（叶菜整叶不切）→ 按「一天一盒」分装 → 前 3 天先吃叶菜，根茎/菜花排后面。</div>
+  <div class="legend">第 7 天用剩下的菜随意配。<b>不吃</b>：秋葵、苦瓜、胡萝卜、西兰花、海带。备菜：洗净 → 切好（叶菜整叶不切）→ 按上面 6 天的量分装 → 前 3 天先吃叶菜，根茎/菜花排后面。</div>
 </div>
 
 <!-- ============ 4. 体重/腰围记录 ============ -->
@@ -218,23 +232,27 @@ var HABITS = [
   ['步数达标',      'Phase0 6000 / 之后 8000+']
 ];
 
-/* 每周备菜 / 采购清单（不吃：秋葵、苦瓜、胡萝卜、西兰花、海带） */
-var PREP = [
-  '菜花（花椰菜） 2 颗',
-  '大白菜 / 娃娃菜 1 颗',
-  '叶菜 2 把（菠菜 / 油麦菜 / 茼蒿）',
-  '金针菇 / 香菇 / 杏鲍菇 3 份',
-  '番茄 6 个',
-  '冬瓜 / 白萝卜 各 1 段',
-  '莴笋 / 芹菜 各 1 份',
-  '青椒 / 彩椒 4 个',
-  '豆芽 / 荷兰豆 1 袋',
-  '干木耳 1 包',
-  '即食鸡胸 7 盒',
-  '鸡蛋 12 个（冷藏存放，别洗）',
-  '老豆腐 3 盒（吃不完切块冷冻）',
-  '冷冻虾仁 1 袋',
-  '卤牛肉 2 份 / 真空卤蛋 6 个'
+/* 一周备菜：总采购量（按重量）+ 6 天分装（每天打钩）
+   不吃：秋葵、苦瓜、胡萝卜、西兰花、海带 */
+var PREP_TOTAL = [
+  ['菜花（花椰菜）', '300g'], ['大白菜 / 娃娃菜', '400g'], ['叶菜（菠菜 / 油麦菜 / 茼蒿）', '400g'],
+  ['金针菇', '100g'], ['香菇', '100g'], ['杏鲍菇', '100g'],
+  ['番茄', '200g'], ['冬瓜', '150g'], ['白萝卜', '100g'],
+  ['莴笋', '100g'], ['芹菜', '100g'], ['彩椒 / 青椒', '150g'],
+  ['豆芽', '150g'], ['干木耳（泡发后约 50g）', '10g']
+];
+var PREP_PROTEIN = [
+  ['即食鸡胸', '200g'], ['卤牛肉', '200g'], ['冷冻虾仁', '150g'],
+  ['老豆腐', '200g'], ['鸡蛋', '2 个（约 100g）'],
+  ['纯牛奶 / 无糖豆浆（可选）', '1000ml']
+];
+var PREP_DAYS = [
+  ['第 1 天', '菜花 150g + 番茄 150g + 金针菇 100g', '即食鸡胸 100g'],
+  ['第 2 天', '大白菜 200g + 冬瓜 150g + 干木耳 10g', '卤牛肉 100g'],
+  ['第 3 天', '菠菜/油麦菜 200g + 香菇 100g + 白萝卜 100g', '冷冻虾仁 150g'],
+  ['第 4 天', '菜花 150g + 芹菜 100g + 彩椒 150g', '老豆腐 200g + 鸡蛋 1 个'],
+  ['第 5 天', '大白菜 200g + 豆芽 150g + 番茄 50g', '即食鸡胸 100g'],
+  ['第 6 天', '茼蒿/菠菜 200g + 杏鲍菇 100g + 莴笋 100g', '卤牛肉 100g + 鸡蛋 1 个']
 ];
 
 function phaseOf(w){ if(w<=2) return 0; if(w<=6) return 1; if(w<=16) return 2; return 3; }
@@ -338,14 +356,21 @@ function renderHabits(){
 
 function renderPrep(){
   var w=state.cur;
-  document.getElementById('prepWeekLabel').textContent='当前显示：第 '+w+' 周（买齐 / 备好就打勾，每周重来一次）';
-  var body='';
-  for(var i=0;i<PREP.length;i++){
-    var key=w+'-p-'+i;
-    body+='<tr><td class="habit-name">'+PREP[i]+'</td>'+
+  document.getElementById('prepWeekLabel').textContent='当前显示：第 '+w+' 周（一周备 6 次，备好一天就打一个钩）';
+  var t='';
+  for(var i=0;i<PREP_TOTAL.length;i++) t+='<tr><td class="habit-name">'+PREP_TOTAL[i][0]+'</td><td class="tiny">'+PREP_TOTAL[i][1]+'</td></tr>';
+  document.getElementById('prepTotalBody').innerHTML=t;
+  var p='';
+  for(var j=0;j<PREP_PROTEIN.length;j++) p+='<tr><td class="habit-name">'+PREP_PROTEIN[j][0]+'</td><td class="tiny">'+PREP_PROTEIN[j][1]+'</td></tr>';
+  document.getElementById('prepProteinBody').innerHTML=p;
+  var d='';
+  for(var k=0;k<PREP_DAYS.length;k++){
+    var key=w+'-d-'+k;
+    d+='<tr><td><b>'+PREP_DAYS[k][0]+'</b></td><td class="tiny">'+PREP_DAYS[k][1]+'</td><td class="tiny">'+PREP_DAYS[k][2]+'</td>'+
       '<td class="daycell"><input type="checkbox" class="ck prep-ck" data-key="'+key+'"'+(state.prep[key]?' checked':'')+'></td></tr>';
   }
-  document.getElementById('prepBody').innerHTML=body;
+  d+='<tr><td>第 7 天</td><td colspan="2" class="tiny">用剩下的菜随意配 / 自由安排</td><td class="daycell"></td></tr>';
+  document.getElementById('prepDayBody').innerHTML=d;
   Array.prototype.forEach.call(document.querySelectorAll('.prep-ck'),function(c){
     c.onchange=function(){ var k=this.getAttribute('data-key'); state.prep[k]=this.checked; if(!this.checked) delete state.prep[k]; save(); };
   });
